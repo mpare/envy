@@ -82,9 +82,9 @@ type DatabaseConfig struct {
 
 ## API
 
-### Load(dest any) error
+### Load(destination any) error
 
-Loads environment variables from `os.Environ()` into the dest struct.
+Loads environment variables from `os.Environ()` into the destination struct.
 
 ```go
 var cfg Config
@@ -93,7 +93,7 @@ if err := envy.Load(&cfg); err != nil {
 }
 ```
 
-### MustLoad(dest any)
+### MustLoad(destination any)
 
 Same as `Load()` but panics on error. Useful at application startup.
 
@@ -102,7 +102,7 @@ var cfg Config
 envy.MustLoad(&cfg) // Panics if validation fails
 ```
 
-### LoadFrom(dest any, environ map[string]string) error
+### LoadFrom(destination any, environ map[string]string) error
 
 Loads from a custom map. Useful for testing.
 
