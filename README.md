@@ -281,25 +281,6 @@ func TestMyService(t *testing.T) {
 }
 ```
 
-## Design Principles
-
-1. **Zero dependencies**: Only Go stdlib (reflect, strconv, time, fmt, strings, os)
-2. **Single package**: No `internal/` subpackages
-3. **Aggregate errors**: Collect all validation errors in one pass
-4. **Type-safe**: Full support for Go's standard types
-5. **Test-friendly**: `LoadFrom()` for custom env maps
-
-## Comparison
-
-| Feature | envy | godotenv | envconfig |
-|---------|----------|----------|-----------|
-| Zero dependencies | ✅ | ❌ | ✅ |
-| `LoadFrom()` for tests | ✅ | ❌ | ❌ |
-| Aggregated errors | ✅ | ❌ | ❌ |
-| `time.Duration` native | ✅ | ❌ | ✅ |
-| Nested structs + prefix | ✅ | ❌ | ✅ |
-| Custom slice separator | ✅ | ❌ | Partial |
-
 ## License
 
 MIT
