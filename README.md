@@ -128,6 +128,58 @@ err := envy.LoadFrom(&cfg, map[string]string{
 | `[]float32`, `[]float64` | `"1.5,2.5,3.5"` (custom separator via `separator=`) |
 | `[]bool` | `"true,false,1"` (custom separator via `separator=`) |
 | Nested Struct | Via `prefix=` for namespacing |
+| Custom Types | Types implementing `SelfDecoder` |
+
+## Custom Decoders
+
+For types not natively supported, implement the `SelfDecoder` interface to provide custom decoding logic:
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"reflect"
+
+	"github.com/mpare/envy"
+	"github.com/mpare/envy/decoders"
+)
+
+// JSONData is a custom type that decodes JSON
+type JSONData map[string]interface{}
+
+// Decode implements the SelfDecoder interface
+func (j *JSONData) Decode(field reflect.Value, raw string, tag decoders.TagReader) error {
+	if err := json.Unmarshal([]byte(raw), j); err != nil {
+		return err
+	}
+	field.Set(reflect.ValueOf(*j))
+	return nil
+}
+
+// Usage
+type Config struct {
+	Metadata JSONData `env:"METADATA"`
+}
+
+func main() {
+	var cfg Config
+	envy.MustLoad(&cfg)
+	// cfg.Metadata now contains parsed JSON data
+}
+```
+
+When loading from environment variables:
+
+```bash
+export METADATA='{"version":"1.0","env":"prod","features":["auth","logging"]}'
+```
+
+**Key points:**
+- Implement `decoders.SelfDecoder` interface with a single `Decode` method
+- Your type is automatically detected and used when no built-in decoder matches
+- Custom decoders receive the raw string value and must parse/validate it
+- Return an error if the value is invalid; envy will collect it as a `ValidationError`
 
 ## Field Behavior
 

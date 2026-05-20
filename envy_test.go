@@ -1,9 +1,12 @@
 package envy
 
 import (
+	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 
+	"github.com/mpare/envy/decoders"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,7 +57,28 @@ const (
 	tagCSV  = "web,api,v2"
 	ipCSV   = "192.168.1.1;192.168.1.2;192.168.1.3"
 	portCSV = "8080,8081,8082"
+
+	// Custom decoder test values
+	dataEnvKey           = "DATA"
+	validJSONData        = `{"key":"value","number":42}`
+	emptyJSONData        = `{}`
+	invalidJSONData      = `{invalid json}`
+	expectedStringValue  = "value"
+	jsonKeyName          = "key"
+	jsonNumberKeyName    = "number"
+	expectedNumberValue  = float64(42)
 )
+
+type CustomJSONData map[string]interface{}
+
+func (c *CustomJSONData) Decode(field reflect.Value, raw string, tag decoders.TagReader) error {
+	if err := json.Unmarshal([]byte(raw), c); err != nil {
+		return err
+	}
+	
+	field.Set(reflect.ValueOf(*c))
+	return nil
+}
 
 func Test_givenAllTypes_whenLoadFrom_thenAllFieldsPopulated(t *testing.T) {
 	// given
@@ -363,4 +387,61 @@ func Test_givenPointerToNonStruct_whenLoadFrom_thenError(t *testing.T) {
 
 	// then
 	assert.Error(t, err)
+}
+
+func Test_givenCustomSelfDecoder_whenLoadFrom_thenCustomDecoderCalled(t *testing.T) {
+	// given
+	type Config struct {
+		Data CustomJSONData `env:"DATA"`
+	}
+
+	var cfg Config
+	envMap := map[string]string{
+		dataEnvKey: validJSONData,
+	}
+
+	// when
+	err := LoadFrom(&cfg, envMap)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, expectedStringValue, cfg.Data[jsonKeyName])
+	assert.Equal(t, expectedNumberValue, cfg.Data[jsonNumberKeyName])
+}
+
+func Test_givenCustomSelfDecoderWithDefault_whenValueMissing_thenDefaultApplied(t *testing.T) {
+	// given
+	type Config struct {
+		Data CustomJSONData `env:"DATA,default={}"` 
+	}
+
+	var cfg Config
+	envMap := map[string]string{}
+
+	// when
+	err := LoadFrom(&cfg, envMap)
+
+	// then
+	require.NoError(t, err)
+	assert.NotNil(t, cfg.Data)
+}
+
+func Test_givenCustomSelfDecoderWithInvalidJSON_thenValidationError(t *testing.T) {
+	// given
+	type Config struct {
+		Data CustomJSONData `env:"DATA"`
+	}
+
+	var cfg Config
+	envMap := map[string]string{
+		dataEnvKey: invalidJSONData,
+	}
+
+	// when
+	err := LoadFrom(&cfg, envMap)
+
+	// then
+	require.Error(t, err)
+	_, ok := err.(*ValidationError)
+	assert.True(t, ok)
 }

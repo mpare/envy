@@ -1,8 +1,12 @@
 package envy
 
 import (
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
+
+	"github.com/mpare/envy/decoders"
 )
 
 // ExampleUsage demonstrates the typical usage of envy
@@ -145,4 +149,39 @@ func ExampleTypes() {
 	// Timeout: 1m0s
 	// Tags: [prod monitoring critical]
 	// Thresholds: [0.5 0.75 0.95]
+}
+
+// JSONConfig is a custom type that implements SelfDecoder to parse JSON.
+type JSONConfig map[string]interface{}
+
+// Decode implements the SelfDecoder interface for JSONConfig.
+func (j *JSONConfig) Decode(field reflect.Value, raw string, tag decoders.TagReader) error {
+	if err := json.Unmarshal([]byte(raw), j); err != nil {
+		return fmt.Errorf("invalid JSON: %w", err)
+	}
+	field.Set(reflect.ValueOf(*j))
+	return nil
+}
+
+// ExampleCustomDecoder demonstrates using a custom decoder for JSON data.
+func ExampleCustomDecoder() {
+	type Config struct {
+		AppName  string     `env:"APP_NAME,default=myapp"`
+		Metadata JSONConfig `env:"METADATA"`
+	}
+
+	var cfg Config
+	err := LoadFrom(&cfg, map[string]string{
+		"METADATA": `{"version":"1.0","env":"prod","features":["auth","logging"]}`,
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("App: %s\n", cfg.AppName)
+	fmt.Printf("Metadata: %v\n", cfg.Metadata)
+	// Output:
+	// App: myapp
+	// Metadata: map[env:prod features:[auth logging] version:1.0]
 }

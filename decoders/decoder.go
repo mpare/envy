@@ -13,8 +13,15 @@ type TagReader interface {
 	GetPrefix() string
 }
 
+// Decoder is for built-in/generic decoders that check multiple types.
 type Decoder interface {
 	CanDecode(field reflect.Value) bool
+	Decode(field reflect.Value, raw string, tag TagReader) error
+}
+
+// SelfDecoder is for types that know how to decode themselves.
+// Types implementing this interface can provide custom decoding logic.
+type SelfDecoder interface {
 	Decode(field reflect.Value, raw string, tag TagReader) error
 }
 
@@ -34,5 +41,11 @@ func Decode(field reflect.Value, raw string, tag TagReader) error {
 		}
 	}
 
-	return fmt.Errorf("unsupported type: %s", field.Kind())
+	if decoderValue := field.Addr(); decoderValue.Type().Implements(reflect.TypeOf((*SelfDecoder)(nil)).Elem()) {
+		if decoder, ok := decoderValue.Interface().(SelfDecoder); ok {
+			return decoder.Decode(field, raw, tag)
+		}
+	}
+
+	return fmt.Errorf("unsupported type: %s (no decoder found)", field.Type())
 }
