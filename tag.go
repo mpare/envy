@@ -12,6 +12,8 @@ const (
 	prefixTag    = "prefix="
 )
 
+// Tag represents a parsed 'env' struct tag.
+// It contains the environment variable name, default value, required flag, separator, and prefix.
 type Tag struct {
 	key          string
 	defaultValue string

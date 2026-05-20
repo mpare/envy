@@ -1,3 +1,21 @@
+// Package envy provides type-safe environment variable loading with validation, defaults, and nested struct support.
+// Zero external dependencies, uses Go stdlib only.
+//
+// Envy allows you to define typed configuration structs with env tags and automatically load
+// environment variables into them with full type conversion, validation, and error reporting.
+//
+// Basic usage:
+//
+//	type Config struct {
+//		Port     int    `env:"PORT,default=8080"`
+//		Debug    bool   `env:"DEBUG,default=false"`
+//		Database string `env:"DATABASE_URL,required"`
+//	}
+//
+//	var cfg Config
+//	envy.MustLoad(&cfg)
+//
+// For more information, see https://github.com/mpare/envy
 package envy
 
 import (
@@ -17,6 +35,9 @@ const (
 	underscore        = '_'
 )
 
+// Load reads environment variables from os.Environ() and populates the given struct.
+// The struct must have exported fields with 'env' tags specifying environment variable names.
+// Returns ValidationError if any required fields are missing or values cannot be parsed.
 func Load(destination any) error {
 	environ := os.Environ()
 	envMap := make(map[string]string, len(environ))
@@ -32,12 +53,32 @@ func Load(destination any) error {
 	return LoadFrom(destination, envMap)
 }
 
+// MustLoad is like Load but panics if an error occurs.
+// Useful for application startup where configuration errors should be fatal.
 func MustLoad(destination any) {
 	if err := Load(destination); err != nil {
 		panic(err)
 	}
 }
 
+// LoadFrom reads environment variables from the given map and populates the struct.
+// This is useful for testing, allowing you to inject custom environment variable maps.
+//
+// Supported field types:
+//   - string, int8, int16, int32, int64, int
+//   - float32, float64
+//   - bool (accepts: true, false, 1, 0, t, f)
+//   - time.Duration
+//   - slices: []string, []int, []float64, []bool (with configurable separator)
+//   - nested structs (with configurable prefix)
+//   - custom types implementing SelfDecoder interface
+//
+// Struct field tags:
+//   - env:"NAME" - required; sets environment variable name
+//   - env:"NAME,default=value" - optional with default value
+//   - env:"NAME,required" - marks field as required
+//   - env:"NAME,separator=;" - for slices, sets field separator (default: ",")
+//   - env:",prefix=PREFIX_" - for nested structs, sets environment variable prefix
 func LoadFrom(destination any, envMap map[string]string) error {
 	destinationValue := reflect.ValueOf(destination)
 	if destinationValue.Kind() != reflect.Ptr || destinationValue.IsNil() {

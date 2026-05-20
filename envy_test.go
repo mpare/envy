@@ -61,7 +61,6 @@ const (
 	// Custom decoder test values
 	dataEnvKey           = "DATA"
 	validJSONData        = `{"key":"value","number":42}`
-	emptyJSONData        = `{}`
 	invalidJSONData      = `{invalid json}`
 	expectedStringValue  = "value"
 	jsonKeyName          = "key"

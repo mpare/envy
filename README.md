@@ -13,6 +13,13 @@ A lightweight Go library for loading environment variables into typed structs wi
 - ✅ **Zero dependencies**: Uses Go stdlib only
 - ✅ **Test-friendly**: `LoadFrom()` accepts custom env maps for unit tests
 
+## Use Cases
+
+- Load 12-factor app config from environment
+- Type-safe configuration management
+- Environment variable validation
+- Go microservices configuration
+
 ## Installation
 
 ```bash

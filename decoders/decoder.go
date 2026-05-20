@@ -1,3 +1,6 @@
+// Package decoders provides type conversion logic for environment variable values.
+// It includes built-in decoders for common types (string, int, float, bool, duration, slices)
+// and support for custom decoders through the SelfDecoder interface.
 package decoders
 
 import (
@@ -5,6 +8,7 @@ import (
 	"reflect"
 )
 
+// TagReader provides access to parsed environment variable tag options.
 type TagReader interface {
 	GetKey() string
 	GetSeparator() string
@@ -13,14 +17,23 @@ type TagReader interface {
 	GetPrefix() string
 }
 
-// Decoder is for built-in/generic decoders that check multiple types.
+// Decoder defines the interface for built-in type decoders.
+// Implementations check if they can decode a specific field type, then decode raw string values.
 type Decoder interface {
 	CanDecode(field reflect.Value) bool
 	Decode(field reflect.Value, raw string, tag TagReader) error
 }
 
-// SelfDecoder is for types that know how to decode themselves.
-// Types implementing this interface can provide custom decoding logic.
+// SelfDecoder defines the interface for types that can decode themselves from environment variable strings.
+// This allows custom types (e.g., JSON objects, YAML configs) to provide their own parsing logic.
+//
+// Example implementation:
+//
+//	type JSONData map[string]interface{}
+//
+//	func (j *JSONData) Decode(field reflect.Value, raw string, tag TagReader) error {
+//		return json.Unmarshal([]byte(raw), j)
+//	}
 type SelfDecoder interface {
 	Decode(field reflect.Value, raw string, tag TagReader) error
 }
