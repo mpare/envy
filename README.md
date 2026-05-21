@@ -2,6 +2,11 @@
 
 A lightweight Go library for loading environment variables into typed structs with validation, defaults, and nested support. Zero external dependencies, stdlib only.
 
+[![Go Version](https://img.shields.io/github/go-mod/go-version/mpare/envy)](https://github.com/mpare/envy)
+[![CI](https://github.com/mpare/envy/actions/workflows/ci.yml/badge.svg)](https://github.com/mpare/envy/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mpare/envy)](https://goreportcard.com/report/github.com/mpare/envy)
+[![License](https://img.shields.io/github/license/mpare/envy)](LICENSE)
+
 ## Features
 
 - ✅ **Type-safe**: String, int, float, bool, duration, slices, and nested structs
