@@ -55,6 +55,16 @@ func main() {
 }
 ```
 
+## Examples
+
+For more comprehensive examples, see the [examples](examples) directory:
+
+- [Basic Configuration](examples/01_basic) - Simple types and defaults
+- [Microservice Setup](examples/02_microservice) - Nested structs with prefixes
+- [Custom Decoders](examples/03_custom_decoder) - Parsing JSON from environment variables
+
+Each example is runnable and documented with detailed explanations.
+
 ## Struct Tag Format
 
 ```go
