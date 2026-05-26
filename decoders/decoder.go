@@ -15,6 +15,10 @@ type TagReader interface {
 	GetDefaultValue() string
 	IsRequired() bool
 	GetPrefix() string
+	IsExpand() bool
+	IsFile() bool
+	IsNotEmpty() bool
+	GetKeyValSeparator() string
 }
 
 // Decoder defines the interface for built-in type decoders.
@@ -40,11 +44,13 @@ type SelfDecoder interface {
 
 var decoders = []Decoder{
 	&durationDecoder{},
+	&urlDecoder{},
 	&stringDecoder{},
 	&intDecoder{},
 	&floatDecoder{},
 	&boolDecoder{},
 	&sliceDecoder{},
+	&mapDecoder{},
 }
 
 func Decode(field reflect.Value, raw string, tag TagReader) error {
@@ -61,4 +67,8 @@ func Decode(field reflect.Value, raw string, tag TagReader) error {
 	}
 
 	return fmt.Errorf("unsupported type: %s (no decoder found)", field.Type())
+}
+
+func implementsSelfDecoder(field reflect.Value) bool {
+	return field.Addr().Type().Implements(reflect.TypeOf((*SelfDecoder)(nil)).Elem())
 }

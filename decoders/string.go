@@ -7,6 +7,10 @@ import (
 type stringDecoder struct{}
 
 func (s *stringDecoder) CanDecode(field reflect.Value) bool {
+	if implementsSelfDecoder(field) {
+		return false
+	}
+	
 	return field.Kind() == reflect.String
 }
 

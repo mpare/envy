@@ -9,12 +9,17 @@ A lightweight Go library for loading environment variables into typed structs wi
 
 ## Features
 
-- ✅ **Type-safe**: String, int, float, bool, duration, slices, and nested structs
+- ✅ **Type-safe**: String, int, float, bool, duration, slices, maps, URLs, and nested structs
 - ✅ **Default values**: Specify defaults with `default=value` tag
 - ✅ **Required fields**: Mark fields as `required` and get validation errors
 - ✅ **Aggregated errors**: Collect all validation errors in one pass
 - ✅ **Nested structs**: Use `prefix=` for environment variable namespacing
-- ✅ **Custom separators**: Configure slice separators with `separator=`
+- ✅ **Custom separators**: Configure slice/map separators with `separator=`
+- ✅ **Variable expansion**: Expand environment variables in values with `expand` tag
+- ✅ **File reading**: Load configuration from files with `file` tag
+- ✅ **Empty validation**: Enforce non-empty values with `notEmpty` tag
+- ✅ **Map support**: Parse maps with configurable key-value separators
+- ✅ **URL parsing**: Built-in support for `url.URL` type
 - ✅ **Zero dependencies**: Uses Go stdlib only
 - ✅ **Test-friendly**: `LoadFrom()` accepts custom env maps for unit tests
 
@@ -78,15 +83,28 @@ type Config struct {
 	// Required field (error if not set)
 	DatabaseURL string `env:"DATABASE_URL,required"`
 
+	// Must not be empty
+	Secret string `env:"SECRET,notEmpty"`
+
+	// Expand environment variables in value (e.g., FOO_${BAR})
+	Path string `env:"CUSTOM_PATH,expand"`
+
+	// Read value from file path
+	CertFile string `env:"CERT_PATH,file"`
+
 	// Various types
 	Debug      bool          `env:"DEBUG,default=false"`
 	Timeout    time.Duration `env:"TIMEOUT,default=30s"`
 	MaxRetries int           `env:"MAX_RETRIES,default=3"`
 	Rate       float64       `env:"RATE,default=1.5"`
+	ServerURL  url.URL       `env:"SERVER_URL"`
 
 	// Slice with custom separator
 	AllowedIPs []string `env:"ALLOWED_IPS,separator=;"`
 	Workers    []int    `env:"WORKER_PORTS,separator=,"`
+
+	// Map with custom separators (item separator and key:value separator)
+	Labels map[string]string `env:"LABELS,separator=;,keyValSeparator=:"`
 
 	// Nested struct with prefix
 	Database DatabaseConfig `env:",prefix=DB_"`
@@ -98,6 +116,17 @@ type DatabaseConfig struct {
 	Password string `env:"PASSWORD,required"`
 }
 // This looks for: DB_HOST, DB_PORT, DB_PASSWORD
+
+// Tag Options Reference:
+// - env:"KEY"              : Set environment variable name (required)
+// - ,required              : Mark field as required (error if not set)
+// - ,default=value         : Provide default value if env var not set
+// - ,notEmpty              : Error if env var is set but empty
+// - ,expand                : Expand ${VAR} references in the value
+// - ,file                  : Read value from file path specified in env var
+// - ,separator=,           : Custom separator for slices and map items (default: ",")
+// - ,keyValSeparator=:     : Custom separator for map key:value pairs (default: ":")
+// - ,prefix=PREFIX_        : For nested structs, adds prefix to all env var names
 ```
 
 **Important**: All struct fields must be **exported** (start with a capital letter). Unexported fields are silently skipped.
@@ -145,10 +174,13 @@ err := envy.LoadFrom(&cfg, map[string]string{
 | `float32`, `float64` | `"1.5"` |
 | `bool` | `"true"`, `"false"`, `"1"`, `"0"`, `"t"`, `"f"` |
 | `time.Duration` | `"30s"`, `"5m"`, `"1h30m"` |
+| `url.URL` | `"https://example.com:8080/path"` |
 | `[]string` | `"a,b,c"` or `"a;b;c"` (custom separator via `separator=`) |
 | `[]int` | `"1,2,3"` (custom separator via `separator=`) |
 | `[]float32`, `[]float64` | `"1.5,2.5,3.5"` (custom separator via `separator=`) |
 | `[]bool` | `"true,false,1"` (custom separator via `separator=`) |
+| `map[string]string` | `"key1:val1,key2:val2"` (separator and keyValSeparator customizable) |
+| `map[string]int` | `"db:5432,cache:6379"` |
 | Nested Struct | Via `prefix=` for namespacing |
 | Custom Types | Types implementing `SelfDecoder` |
 
@@ -202,6 +234,80 @@ export METADATA='{"version":"1.0","env":"prod","features":["auth","logging"]}'
 - Your type is automatically detected and used when no built-in decoder matches
 - Custom decoders receive the raw string value and must parse/validate it
 - Return an error if the value is invalid; envy will collect it as a `ValidationError`
+
+## Advanced Features
+
+### Variable Expansion
+
+Use the `expand` tag to expand environment variables within values:
+
+```go
+type Config struct {
+	BasePath string `env:"BASE_PATH"`
+	// If BASE_PATH=/data and CUSTOM_PATH=${BASE_PATH}/config
+	// then CustomPath will be "/data/config"
+	CustomPath string `env:"CUSTOM_PATH,expand"`
+}
+```
+
+Environment setup:
+```bash
+export BASE_PATH=/data
+export CUSTOM_PATH='${BASE_PATH}/config'
+```
+
+### File Reading
+
+Use the `file` tag to read configuration from a file:
+
+```go
+type Config struct {
+	// CertPath contains the path to a certificate file
+	// The environment variable should contain the file path,
+	// and the field will contain the file's content
+	Cert string `env:"CERT_PATH,file"`
+}
+```
+
+Environment setup:
+```bash
+export CERT_PATH=/etc/ssl/certs/server.crt
+```
+
+### Empty Value Validation
+
+Use the `notEmpty` tag to require non-empty values:
+
+```go
+type Config struct {
+	// Error if SECRET is not set OR is set to an empty string
+	Secret string `env:"SECRET,notEmpty"`
+}
+```
+
+### Map Parsing
+
+Parse maps with customizable separators:
+
+```go
+type Config struct {
+	// Parse: "key1:val1,key2:val2"
+	Labels map[string]string `env:"LABELS"`
+
+	// Custom separators: "key1=val1;key2=val2"
+	Headers map[string]string `env:"HEADERS,separator=;,keyValSeparator==="`
+
+	// Parse port mappings: "db:5432,cache:6379"
+	Ports map[string]int `env:"SERVICE_PORTS"`
+}
+```
+
+Environment setup:
+```bash
+export LABELS="env:prod,version:1.0"
+export HEADERS="Authorization=Bearer token;Content-Type=application/json"
+export SERVICE_PORTS="db:5432,cache:6379"
+```
 
 ## Field Behavior
 

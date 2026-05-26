@@ -11,6 +11,10 @@ const floatBitSize = 64
 type floatDecoder struct{}
 
 func (f *floatDecoder) CanDecode(field reflect.Value) bool {
+	if implementsSelfDecoder(field) {
+		return false
+	}
+	
 	return field.Kind() == reflect.Float32 || field.Kind() == reflect.Float64
 }
 

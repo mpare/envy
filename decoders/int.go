@@ -14,6 +14,10 @@ const (
 type intDecoder struct{}
 
 func (i *intDecoder) CanDecode(field reflect.Value) bool {
+	if implementsSelfDecoder(field) {
+		return false
+	}
+	
 	return field.Kind() == reflect.Int ||
 		field.Kind() == reflect.Int8 ||
 		field.Kind() == reflect.Int16 ||

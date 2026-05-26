@@ -9,6 +9,10 @@ import (
 type durationDecoder struct{}
 
 func (d *durationDecoder) CanDecode(field reflect.Value) bool {
+	if implementsSelfDecoder(field) {
+		return false
+	}
+	
 	return field.Type() == reflect.TypeOf(time.Duration(0))
 }
 

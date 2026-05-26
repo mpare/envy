@@ -10,16 +10,24 @@ const (
 	defaultTag   = "default="
 	separatorTag = "separator="
 	prefixTag    = "prefix="
+	expandTag    = "expand"
+	fileTag      = "file"
+	notEmptyTag  = "notEmpty"
+	keyValSepTag = "keyValSeparator="
 )
 
 // Tag represents a parsed 'env' struct tag.
-// It contains the environment variable name, default value, required flag, separator, and prefix.
+// It contains the environment variable name, default value, required flag, separator, prefix, and options.
 type Tag struct {
-	key          string
-	defaultValue string
-	required     bool
-	separator    string
-	prefix       string
+	key             string
+	defaultValue    string
+	required        bool
+	separator       string
+	prefix          string
+	expand          bool
+	file            bool
+	notEmpty        bool
+	keyValSeparator string
 }
 
 func (t Tag) GetKey() string {
@@ -42,6 +50,22 @@ func (t Tag) GetPrefix() string {
 	return t.prefix
 }
 
+func (t Tag) IsExpand() bool {
+	return t.expand
+}
+
+func (t Tag) IsFile() bool {
+	return t.file
+}
+
+func (t Tag) IsNotEmpty() bool {
+	return t.notEmpty
+}
+
+func (t Tag) GetKeyValSeparator() string {
+	return t.keyValSeparator
+}
+
 func parseTag(tag string) Tag {
 	if tag == "" {
 		return Tag{}
@@ -58,6 +82,21 @@ func parseTag(tag string) Tag {
 			continue
 		}
 
+		if part == expandTag {
+			result.expand = true
+			continue
+		}
+
+		if part == fileTag {
+			result.file = true
+			continue
+		}
+
+		if part == notEmptyTag {
+			result.notEmpty = true
+			continue
+		}
+
 		if strings.HasPrefix(part, defaultTag) {
 			result.defaultValue = strings.TrimPrefix(part, defaultTag)
 			continue
@@ -65,6 +104,11 @@ func parseTag(tag string) Tag {
 
 		if strings.HasPrefix(part, separatorTag) {
 			result.separator = strings.TrimPrefix(part, separatorTag)
+			continue
+		}
+
+		if strings.HasPrefix(part, keyValSepTag) {
+			result.keyValSeparator = strings.TrimPrefix(part, keyValSepTag)
 			continue
 		}
 

@@ -11,6 +11,10 @@ const defaultSeparator = ","
 type sliceDecoder struct{}
 
 func (s *sliceDecoder) CanDecode(field reflect.Value) bool {
+	if implementsSelfDecoder(field) {
+		return false
+	}
+	
 	return field.Kind() == reflect.Slice
 }
 

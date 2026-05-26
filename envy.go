@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/mpare/envy/decoders"
@@ -34,6 +35,8 @@ const (
 	lastChar          = 'Z'
 	underscore        = '_'
 )
+
+var expandVarRegex = regexp.MustCompile(`\$\{([^}]+)\}`)
 
 // Load reads environment variables from os.Environ() and populates the given struct.
 // The struct must have exported fields with 'env' tags specifying environment variable names.
@@ -69,7 +72,9 @@ func MustLoad(destination any) {
 //   - float32, float64
 //   - bool (accepts: true, false, 1, 0, t, f)
 //   - time.Duration
+//   - url.URL
 //   - slices: []string, []int, []float64, []bool (with configurable separator)
+//   - maps: map[K]V where K and V are supported types (with configurable separators)
 //   - nested structs (with configurable prefix)
 //   - custom types implementing SelfDecoder interface
 //
@@ -77,7 +82,11 @@ func MustLoad(destination any) {
 //   - env:"NAME" - required; sets environment variable name
 //   - env:"NAME,default=value" - optional with default value
 //   - env:"NAME,required" - marks field as required
-//   - env:"NAME,separator=;" - for slices, sets field separator (default: ",")
+//   - env:"NAME,notEmpty" - field must not be empty if set
+//   - env:"NAME,expand" - expand ${VAR} references in the value
+//   - env:"NAME,file" - treat value as file path and read file content
+//   - env:"NAME,separator=;" - for slices/maps, sets item separator (default: ",")
+//   - env:"NAME,keyValSeparator=:" - for maps, sets key:value separator (default: ":")
 //   - env:",prefix=PREFIX_" - for nested structs, sets environment variable prefix
 func LoadFrom(destination any, envMap map[string]string) error {
 	destinationValue := reflect.ValueOf(destination)
@@ -150,6 +159,35 @@ func LoadFrom(destination any, envMap map[string]string) error {
 			}
 		}
 
+		if tag.expand {
+			rawValue = expandVars(rawValue, envMap)
+		}
+
+		if tag.notEmpty && rawValue == "" {
+			errs = append(errs, FieldError{
+				Field:   field.Name,
+				EnvKey:  envKey,
+				Message: "must not be empty",
+			})
+
+			continue
+		}
+
+		if tag.file {
+			content, err := readFileContent(rawValue)
+			if err != nil {
+				errs = append(errs, FieldError{
+					Field:   field.Name,
+					EnvKey:  envKey,
+					Message: err.Error(),
+				})
+
+				continue
+			}
+
+			rawValue = content
+		}
+
 		if err := decoders.Decode(fieldValue, rawValue, tag); err != nil {
 			errs = append(errs, FieldError{
 				Field:   field.Name,
@@ -206,6 +244,34 @@ func loadNestedStruct(structVal reflect.Value, envMap map[string]string, prefix 
 			}
 		}
 
+		if tag.expand {
+			rawValue = expandVars(rawValue, envMap)
+		}
+
+		if tag.notEmpty && rawValue == "" {
+			errs = append(errs, FieldError{
+				Field:   field.Name,
+				EnvKey:  envKey,
+				Message: "must not be empty",
+			})
+
+			continue
+		}
+
+		if tag.file {
+			content, err := readFileContent(rawValue)
+			if err != nil {
+				errs = append(errs, FieldError{
+					Field:   field.Name,
+					EnvKey:  envKey,
+					Message: err.Error(),
+				})
+				continue
+			}
+
+			rawValue = content
+		}
+
 		if err := decoders.Decode(fieldValue, rawValue, tag); err != nil {
 			errs = append(errs, FieldError{
 				Field:   field.Name,
@@ -220,6 +286,26 @@ func loadNestedStruct(structVal reflect.Value, envMap map[string]string, prefix 
 	}
 
 	return nil
+}
+
+func expandVars(value string, envMap map[string]string) string {
+	return expandVarRegex.ReplaceAllStringFunc(value, func(match string) string {
+		varName := match[2 : len(match)-1]
+		if val, exists := envMap[varName]; exists {
+			return val
+		}
+
+		return match
+	})
+}
+
+func readFileContent(path string) (string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file %q: %w", path, err)
+	}
+	
+	return string(content), nil
 }
 
 func toEnvName(value string) string {
