@@ -77,7 +77,8 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	fmt.Println("=== Microservice Configuration ===\n")
+	fmt.Println("=== Microservice Configuration ===")
+	fmt.Println()
 
 	// Application settings
 	fmt.Printf("Application: %s\n", cfg.AppName)

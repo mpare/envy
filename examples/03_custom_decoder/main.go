@@ -72,7 +72,8 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	fmt.Printf("=== Custom Decoder Example ===\n\n")
+	fmt.Println("=== Custom Decoder Example ===")
+	fmt.Println()
 
 	fmt.Printf("Application: %s\n\n", cfg.AppName)
 
@@ -88,14 +89,16 @@ func main() {
 
 	// Display metadata
 	if len(cfg.Metadata) > 0 {
-		fmt.Println("\n=== Application Metadata ===")
+		fmt.Println()
+		fmt.Println("=== Application Metadata ===")
 		for key, value := range cfg.Metadata {
 			fmt.Printf("  %s: %v\n", key, value)
 		}
 	}
 
 	// Demonstrate how to use the parsed data
-	fmt.Println("\n=== Usage Example ===")
+	fmt.Println()
+	fmt.Println("=== Usage Example ===")
 	if auth, exists := cfg.Features["authentication"].(bool); exists && auth {
 		fmt.Println("✓ Authentication is enabled - initializing auth module...")
 	}
@@ -104,7 +107,8 @@ func main() {
 		fmt.Printf("✓ Application version %s loaded\n", version)
 	}
 
-	fmt.Println("\n=== Custom Decoder Pattern ===")
+	fmt.Println()
+	fmt.Println("=== Custom Decoder Pattern ===")
 	fmt.Println("To create custom decoders for other types:")
 	fmt.Println("1. Define your type (can be a struct, map, or wrapper)")
 	fmt.Println("2. Implement SelfDecoder interface with a Decode() method")

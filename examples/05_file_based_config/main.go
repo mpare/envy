@@ -39,9 +39,11 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	fmt.Printf("=== File-Based Configuration ===\n\n")
+	fmt.Println("=== File-Based Configuration ===")
+	fmt.Println()
 
-	fmt.Printf("Application: %s\n\n", cfg.AppName)
+	fmt.Printf("Application: %s\n", cfg.AppName)
+	fmt.Println()
 
 	if cfg.TLSCert != "" {
 		fmt.Printf("TLS Certificate (from file):\n")

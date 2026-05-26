@@ -45,7 +45,8 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	fmt.Println("=== Advanced Configuration Features ===\n")
+	fmt.Println("=== Advanced Configuration Features ===")
+	fmt.Println()
 
 	// URL parsing
 	fmt.Printf("Server URL: %s\n", cfg.ServerURL.String())
@@ -53,30 +54,35 @@ func main() {
 	fmt.Printf("  Host: %s\n", cfg.ServerURL.Host)
 
 	// Variable expansion
-	fmt.Printf("\nPath Configuration:\n")
+	fmt.Println()
+	fmt.Println("Path Configuration:")
 	fmt.Printf("  Base Path: %s\n", cfg.BasePath)
 	fmt.Printf("  Config Path: %s (expanded from ${BASE_PATH}/config)\n", cfg.ConfigPath)
 
 	// notEmpty validation
-	fmt.Printf("\nAPI Key: %s (validated as non-empty)\n", cfg.APIKey)
+	fmt.Println()
+	fmt.Printf("API Key: %s (validated as non-empty)\n", cfg.APIKey)
 
 	// Map parsing
 	if len(cfg.ServicePorts) > 0 {
-		fmt.Println("\nService Ports (map[string]int):")
+		fmt.Println()
+		fmt.Println("Service Ports (map[string]int):")
 		for service, port := range cfg.ServicePorts {
 			fmt.Printf("  %s: %d\n", service, port)
 		}
 	}
 
 	if len(cfg.Headers) > 0 {
-		fmt.Println("\nHTTP Headers (map[string]string):")
+		fmt.Println()
+		fmt.Println("HTTP Headers (map[string]string):")
 		for key, value := range cfg.Headers {
 			fmt.Printf("  %s: %s\n", key, value)
 		}
 	}
 
 	if len(cfg.AllowedIPs) > 0 {
-		fmt.Println("\nAllowed IPs:")
+		fmt.Println()
+		fmt.Println("Allowed IPs:")
 		for _, ip := range cfg.AllowedIPs {
 			fmt.Printf("  - %s\n", ip)
 		}

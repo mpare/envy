@@ -34,7 +34,8 @@ type ValidationConfig struct {
 
 func main() {
 	// Example 1: With valid configuration
-	fmt.Println("=== Example 1: Valid Configuration ===\n")
+	fmt.Println("=== Example 1: Valid Configuration ===")
+	fmt.Println()
 	validEnv := map[string]string{
 		"APP_NAME":     "myapp",
 		"API_KEY":      "secret-key-123",
@@ -55,7 +56,9 @@ func main() {
 	fmt.Printf("  Retries: %d\n", cfg1.Retries)
 
 	// Example 2: Missing required field
-	fmt.Println("\n=== Example 2: Missing Required Field ===\n")
+	fmt.Println()
+	fmt.Println("=== Example 2: Missing Required Field ===")
+	fmt.Println()
 	invalidEnv := map[string]string{
 		"APP_NAME": "myapp",
 		// DATABASE_URL is missing!
@@ -75,7 +78,9 @@ func main() {
 	}
 
 	// Example 3: Empty value with notEmpty validation
-	fmt.Println("=== Example 3: Empty Value with notEmpty ===\n")
+	fmt.Println()
+	fmt.Println("=== Example 3: Empty Value with notEmpty ===")
+	fmt.Println()
 	emptyEnv := map[string]string{
 		"APP_NAME":     "myapp",
 		"API_KEY":      "", // Empty! This should fail notEmpty validation
@@ -94,7 +99,9 @@ func main() {
 	}
 
 	// Example 4: Multiple validation errors
-	fmt.Println("=== Example 4: Multiple Validation Errors ===\n")
+	fmt.Println()
+	fmt.Println("=== Example 4: Multiple Validation Errors ===")
+	fmt.Println()
 	multiErrorEnv := map[string]string{
 		// APP_NAME missing (required)
 		"API_KEY": "", // Empty (notEmpty)
@@ -115,11 +122,13 @@ func main() {
 		}
 	}
 
-	fmt.Println("=== Validation Features Summary ===\n")
+	fmt.Println()
+	fmt.Println("=== Validation Features Summary ===")
 	fmt.Println("Supported validations:")
 	fmt.Println("  - required: field must be set (error if missing)")
 	fmt.Println("  - notEmpty: field must not be empty string (error if empty)")
 	fmt.Println("  - default=value: fallback value if not set")
-	fmt.Println("\nAll validation errors are collected and reported together,")
+	fmt.Println()
+	fmt.Println("All validation errors are collected and reported together,")
 	fmt.Println("so you see all problems at once instead of failing on first error.")
 }
